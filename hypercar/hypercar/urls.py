@@ -15,11 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from car_service.views import MainPage 
+from car_service.views import MainPage , MenuPage 
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('welcome' , MainPage.as_view() )
-
+    path('welcome/' , MainPage.as_view() ),
+    path('menu/' , MenuPage.as_view())
 ]

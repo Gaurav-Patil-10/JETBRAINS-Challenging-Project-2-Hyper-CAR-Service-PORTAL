@@ -11,4 +11,8 @@ class MainPage(View):
 
         return HttpResponse ("<h2>Welcome to the Hypercar Service!</h2>")
 
-        
+
+class MenuPage (View):
+
+    def get(self , requests , *args, **kwargs):
+        return render ( requests , 'menu.html')
