@@ -1,16 +1,11 @@
-from django.shortcuts import render
-from django.views.generic.base import View
-from django.http import HttpResponse
 
-# Create your views here.
 
 oil_clients = []
 tire_clients = []
 diag_clients = []
 
-def wait_time(oil_clients , tire_clients , diag_clients , ticket):
 
-
+def wait_time(ticket):
     if "oil" in ticket:
         return oil_clients[-1]['wait time'] + 2
 
@@ -24,9 +19,10 @@ def wait_time(oil_clients , tire_clients , diag_clients , ticket):
         return time
 
 
-def electronic_que( oil_clients , tire_clients , diag_clients ,client):
+while True:
 
-    
+    client = input("Enter the job : ")
+
     if "oil" in client:
         if oil_clients == []:
             client_dict = {
@@ -37,7 +33,7 @@ def electronic_que( oil_clients , tire_clients , diag_clients ,client):
         else:
             client_dict = {
                 "id": oil_clients[-1]['id'] + 1,
-                "wait time": wait_time(oil_clients , tire_clients , diag_clients ,"oil")
+                "wait time": wait_time("oil")
             }
             oil_clients.append(client_dict)
 
@@ -45,7 +41,7 @@ def electronic_que( oil_clients , tire_clients , diag_clients ,client):
 
         if tire_clients == [] and oil_clients != []:
             client_dict = {
-                "id": oil_clients[-1]['id'] + 1,
+                "id":  oil_clients[-1]['id'] + 1 ,
                 "wait time": oil_clients[-1]['wait time'] + 5
             }
             tire_clients.append(client_dict)
@@ -60,7 +56,7 @@ def electronic_que( oil_clients , tire_clients , diag_clients ,client):
         elif tire_clients != []:
             client_dict = {
                 "id": tire_clients[-1]['id'] + 1,
-                "wait time": wait_time(oil_clients , tire_clients , diag_clients , "tire")
+                "wait time": wait_time("tire")
             }
             tire_clients.append(client_dict)
 
@@ -69,24 +65,25 @@ def electronic_que( oil_clients , tire_clients , diag_clients ,client):
         if tire_clients == [] and diag_clients == [] and oil_clients == []:
             client_dict = {
                 "id": 1,
-                "wait time": 30
+                "wait time": 0
             }
             diag_clients.append(client_dict)
 
         elif tire_clients != [] and oil_clients != [] and diag_clients != []:
             client_dict = {
                 "id": diag_clients[-1]['id'] + 1,
-                "wait time": wait_time(oil_clients , tire_clients , diag_clients , "diag")
+                "wait time": wait_time("diag")
             }
             diag_clients.append(client_dict)
-
+        
         elif tire_clients != [] and oil_clients != [] and diag_clients == []:
             client_dict = {
-                "id": tire_clients[-1]['id'] + 1,
+                "id": tire_clients[-1]['id'] + 1 ,
                 "wait time": tire_clients[-1]['wait time'] + 30
             }
             diag_clients.append(client_dict)
 
+        
         else:
             if oil_clients == [] and tire_clients != [] and diag_clients == []:
                 client_dict = {
@@ -97,10 +94,11 @@ def electronic_que( oil_clients , tire_clients , diag_clients ,client):
 
             elif oil_clients != [] and tire_clients == [] and diag_clients == []:
                 client_dict = {
-                    "id": oil_clients[-1]['id'] + 1,
+                    "id": oil_clients[-1]['id'] + 1 ,
                     "wait time": oil_clients[-1]['wait time'] + 30
                 }
                 diag_clients.append(client_dict)
+
             elif oil_clients == [] and tire_clients == [] and diag_clients != []:
                 client_dict = {
                     "id": diag_clients[-1]['id'] + 1,
@@ -108,41 +106,6 @@ def electronic_que( oil_clients , tire_clients , diag_clients ,client):
                 }
                 diag_clients.append(client_dict)
 
-    new = oil_clients + tire_clients + diag_clients
-
-    return new
-
-        
-
-class MainPage(View):
-
-    def get(self, requests, *args, **kwargs):
-
-        return HttpResponse("<h2>Welcome to the Hypercar Service!</h2>")
-
-
-class MenuPage (View):
-
-    def get(self, requests, *args, **kwargs):
-        return render(requests, 'menu.html')
-
-
-class ServicePage (View):
-
-    oil_clients = []
-    tire_clients = []
-    diag_clients = []
-
-
-    def get(self, requests, query, *args, **kwargs):
-
-        client_list = electronic_que(oil_clients  , tire_clients , diag_clients , query)
-
-        # new_list = sorted(client_list , key = int(client_list['wait time']) , reverse = False)
-        new_list = client_list
-
-        client = {
-            'number' : new_list[-1]['id'],
-            'wait' : new_list[-1]['wait time']
-        }
-        return render (requests , "service.html" , context={ "data" : client})
+    print(oil_clients)
+    print(tire_clients)
+    print(diag_clients)
