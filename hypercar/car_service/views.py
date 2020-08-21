@@ -4,114 +4,54 @@ from django.http import HttpResponse
 
 # Create your views here.
 
-oil_clients = []
-tire_clients = []
-diag_clients = []
+tickets_dict = {
+    'oil': 0,
+    'tire': 0,
+    'diag': 0,
+}
 
-def wait_time(oil_clients , tire_clients , diag_clients , ticket):
-
-
-    if "oil" in ticket:
-        return oil_clients[-1]['wait time'] + 2
-
-    elif "tire" in ticket:
-        time = tire_clients[-1]['wait time'] + 5
-
-        return time
-
-    elif "diag" in ticket:
-        time = diag_clients[-1]['wait time'] + 30
-        return time
+count_ticket = 1
 
 
-def electronic_que( oil_clients , tire_clients , diag_clients ,client):
+def task_time(ticket):
+    if 'oil' in ticket:
+        return tickets_dict['oil'] * 2
+    elif'tire' in ticket:
+        return (tickets_dict['oil'] * 2) + (tickets_dict['tire'] * 5)
+    elif 'diag' in ticket:
+        return (tickets_dict['oil'] * 2) + (tickets_dict['tire'] * 5) + (
+            tickets_dict['diag'] * 30)
 
-    
+
+def electronic_queue(client):
+
+    global count_ticket
+    busy_stage = False
+    wait_time = task_time(client)
+
     if "oil" in client:
-        if oil_clients == []:
-            client_dict = {
-                "id": 1,
-                "wait time": 2
-            }
-            oil_clients.append(client_dict)
-        else:
-            client_dict = {
-                "id": oil_clients[-1]['id'] + 1,
-                "wait time": wait_time(oil_clients , tire_clients , diag_clients ,"oil")
-            }
-            oil_clients.append(client_dict)
+        tickets_dict['oil'] += 1
+    elif 'tire' in client:
+        tickets_dict['tire'] += 1
+    elif 'diag' in client:
+        tickets_dict['diag'] += 1
 
-    elif "tire" in client:
+    if sum(tickets_dict.values()) > 2:
+        busy_stage = True
 
-        if tire_clients == [] and oil_clients != []:
-            client_dict = {
-                "id": oil_clients[-1]['id'] + 1,
-                "wait time": oil_clients[-1]['wait time'] + 5
-            }
-            tire_clients.append(client_dict)
+    if busy_stage:
+        count_ticket += 1
 
-        elif tire_clients == [] and oil_clients == []:
-            client_dict = {
-                "id": 1,
-                "wait time": 5
-            }
-            tire_clients.append(client_dict)
-
-        elif tire_clients != []:
-            client_dict = {
-                "id": tire_clients[-1]['id'] + 1,
-                "wait time": wait_time(oil_clients , tire_clients , diag_clients , "tire")
-            }
-            tire_clients.append(client_dict)
-
-    elif "diag" in client:
-
-        if tire_clients == [] and diag_clients == [] and oil_clients == []:
-            client_dict = {
-                "id": 1,
-                "wait time": 30
-            }
-            diag_clients.append(client_dict)
-
-        elif tire_clients != [] and oil_clients != [] and diag_clients != []:
-            client_dict = {
-                "id": diag_clients[-1]['id'] + 1,
-                "wait time": wait_time(oil_clients , tire_clients , diag_clients , "diag")
-            }
-            diag_clients.append(client_dict)
-
-        elif tire_clients != [] and oil_clients != [] and diag_clients == []:
-            client_dict = {
-                "id": tire_clients[-1]['id'] + 1,
-                "wait time": tire_clients[-1]['wait time'] + 30
-            }
-            diag_clients.append(client_dict)
-
-        else:
-            if oil_clients == [] and tire_clients != [] and diag_clients == []:
-                client_dict = {
-                    "id": tire_clients[-1]['id'] + 1,
-                    "wait time": tire_clients[-1]['wait time'] + 30
-                }
-                diag_clients.append(client_dict)
-
-            elif oil_clients != [] and tire_clients == [] and diag_clients == []:
-                client_dict = {
-                    "id": oil_clients[-1]['id'] + 1,
-                    "wait time": oil_clients[-1]['wait time'] + 30
-                }
-                diag_clients.append(client_dict)
-            elif oil_clients == [] and tire_clients == [] and diag_clients != []:
-                client_dict = {
-                    "id": diag_clients[-1]['id'] + 1,
-                    "wait time": diag_clients[-1]['wait time'] + 30
-                }
-                diag_clients.append(client_dict)
-
-    new = oil_clients + tire_clients + diag_clients
-
-    return new
-
+        return {
+            'number' : count_ticket - 1,
+            'wait' : wait_time
+        }
+        
+    else:
+        return {
+            'number' : 0,
+            'wait' : 0
+        }
         
 
 class MainPage(View):
@@ -129,20 +69,11 @@ class MenuPage (View):
 
 class ServicePage (View):
 
-    oil_clients = []
-    tire_clients = []
-    diag_clients = []
+  
 
+    count_ticket = 1
 
     def get(self, requests, query, *args, **kwargs):
 
-        client_list = electronic_que(oil_clients  , tire_clients , diag_clients , query)
-
-        # new_list = sorted(client_list , key = int(client_list['wait time']) , reverse = False)
-        new_list = client_list
-
-        client = {
-            'number' : new_list[-1]['id'],
-            'wait' : new_list[-1]['wait time']
-        }
+        client = electronic_queue(query)
         return render (requests , "service.html" , context={ "data" : client})
