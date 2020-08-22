@@ -10,6 +10,8 @@ tickets_dict = {
     'diag': 0,
 }
 
+client_list = []
+
 count_ticket = 1
 
 
@@ -75,6 +77,9 @@ class ServicePage (View):
     def get(self, requests, query, *args, **kwargs):
 
         client = electronic_queue(query)
+
+        client_list.append(client)
+
         return render (requests , "service.html" , context={ "data" : client})
 
 
@@ -84,5 +89,21 @@ class Processing_Page (View):
 
         clients_queue = tickets_dict
 
-        return render ( requests , "process.html" , context= {'line' : clients_queue})
         
+
+        return render ( requests , "process.html" , context= {'line' : clients_queue})
+
+class Next_Client (View):
+
+    
+    def post(self , requests , *args, **kwargs):
+
+        
+        global client_list 
+        
+        del client_list[0]
+        
+        print(client_list)
+
+        return render(requests , 'next.html' , context= { 'clients' : client_list[0]})
+

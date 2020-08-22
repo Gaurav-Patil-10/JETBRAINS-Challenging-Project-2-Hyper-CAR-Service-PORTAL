@@ -10,7 +10,7 @@
     <div>Inflate tires queue: {{ line.tire }}</div>
     <div>Get diagnostic queue: {{ line.diag }}</div>
     
-    <form  method="POST" >
+    <form  method="POST" action="next" >
         {% csrf_token %}
         <button type="submit" >Process next</button>
 

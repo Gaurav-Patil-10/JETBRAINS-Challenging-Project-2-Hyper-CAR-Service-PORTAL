@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from car_service.views import MainPage , MenuPage , ServicePage , Processing_Page
+from car_service.views import MainPage , MenuPage , ServicePage , Processing_Page , Next_Client
 
 
 urlpatterns = [
@@ -23,5 +23,6 @@ urlpatterns = [
     path('welcome/' , MainPage.as_view() ),
     path('menu/' , MenuPage.as_view()),
     path('get_ticket/<str:query>' , ServicePage.as_view()),
-    path('processing' , Processing_Page.as_view())
+    path('processing' , Processing_Page.as_view()),
+    path('next' , Next_Client.as_view())
 ]
