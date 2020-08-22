@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div>Change oil queue: {{ line.oil}}</div>
+    <div>Inflate tires queue: {{ line.tire }}</div>
+    <div>Get diagnostic queue: {{ line.diag }}</div>
+    
+    <form  method="POST" >
+        {% csrf_token %}
+        <button type="submit" >Process next</button>
+
+    </form>
+</body>
+</html>

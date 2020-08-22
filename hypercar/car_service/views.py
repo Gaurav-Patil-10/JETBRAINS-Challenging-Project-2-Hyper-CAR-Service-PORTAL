@@ -70,10 +70,19 @@ class MenuPage (View):
 class ServicePage (View):
 
   
-
     count_ticket = 1
 
     def get(self, requests, query, *args, **kwargs):
 
         client = electronic_queue(query)
         return render (requests , "service.html" , context={ "data" : client})
+
+
+class Processing_Page (View):
+
+    def get(self , requests , *args , **kwargs) :
+
+        clients_queue = tickets_dict
+
+        return render ( requests , "process.html" , context= {'line' : clients_queue})
+        
