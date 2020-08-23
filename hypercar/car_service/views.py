@@ -1,60 +1,51 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic.base import View
 from django.http import HttpResponse
-
+from collections import deque
 # Create your views here.
 
 tickets_dict = {
-    'oil': 0,
-    'tire': 0,
-    'diag': 0,
+    'oil': deque(),
+    'tire': deque(),
+    'diag': deque(),
 }
 
-client_list = []
+first_clients = []
 
+current_client = None
 count_ticket = 1
 
 
-def task_time(ticket):
-    if 'oil' in ticket:
-        return tickets_dict['oil'] * 2
-    elif'tire' in ticket:
-        return (tickets_dict['oil'] * 2) + (tickets_dict['tire'] * 5)
-    elif 'diag' in ticket:
-        return (tickets_dict['oil'] * 2) + (tickets_dict['tire'] * 5) + (
-            tickets_dict['diag'] * 30)
+def initial_wait_time():
 
+    global first_clients
 
-def electronic_queue(client):
-
-    global count_ticket
-    busy_stage = False
-    wait_time = task_time(client)
-
-    if "oil" in client:
-        tickets_dict['oil'] += 1
-    elif 'tire' in client:
-        tickets_dict['tire'] += 1
-    elif 'diag' in client:
-        tickets_dict['diag'] += 1
-
-    if sum(tickets_dict.values()) > 2:
-        busy_stage = True
-
-    if busy_stage:
-        count_ticket += 1
-
-        return {
-            'number' : count_ticket - 1,
-            'wait' : wait_time
-        }
-        
+    for x in first_clients:
+        if "oil" in x['ticket name']:
+            wait_time = 2
+            break
+        elif "tire" in x['ticket name']:
+            wait_time = 5
     else:
-        return {
-            'number' : 0,
-            'wait' : 0
-        }
-        
+        wait_time = 30
+
+    return wait_time
+
+
+def final_wait_time(query):
+
+    global tickets_dict
+
+    if "oil" in query:
+        return len(tickets_dict['oil']) * 2
+
+    elif "tire" in query:
+
+        return (len(tickets_dict['oil']) * 2) + (len(tickets_dict['tire']) * 5)
+
+    elif "diag" in query:
+        return (len(tickets_dict['oil']) * 2) + (len(tickets_dict['tire']) * 5) + (len(tickets_dict['diag']) * 30)
+
 
 class MainPage(View):
 
@@ -71,39 +62,130 @@ class MenuPage (View):
 
 class ServicePage (View):
 
-  
-    count_ticket = 1
-
     def get(self, requests, query, *args, **kwargs):
 
-        client = electronic_queue(query)
+        global count_ticket, first_clients, tickets_dict
 
-        client_list.append(client)
+        if count_ticket <= 2:
+            first_clients.append({
+                "id": 0,
+                "wait time": 0,
+                "ticket name": query
+            })
 
-        return render (requests , "service.html" , context={ "data" : client})
+            client = {
+                'number': 0,
+                'wait': 0
+            }
+
+        else:
+            if count_ticket == 3:
+                if "oil" in query:
+                    tickets_dict['oil'].append({
+                        'id': count_ticket - 2,
+                        'wait time': initial_wait_time()
+                    })
+                elif "tire" in query:
+                    tickets_dict['tire'].append({
+                        'id': count_ticket - 2,
+                        'wait time': initial_wait_time()
+                    })
+                elif "diag" in query:
+                    tickets_dict['diag'].append({
+                        'id': count_ticket - 2,
+                        'wait time': initial_wait_time()
+                    })
+
+                client = {
+                    'number': count_ticket - 2,
+                    'wait': initial_wait_time()
+                }
+            else:
+                if "oil" in query:
+                    tickets_dict['oil'].append({
+                        'id': count_ticket - 2,
+                        'wait time': final_wait_time(query)
+                    })
+                elif "tire" in query:
+                    tickets_dict['tire'].append({
+                        'id': count_ticket - 2,
+                        'wait time': final_wait_time(query)
+                    })
+                elif "diag" in query:
+                    tickets_dict['diag'].append({
+                        'id': count_ticket - 2,
+                        'wait time': final_wait_time(query)
+                    })
+
+                client = {
+                    'number': count_ticket - 2,
+                    'wait': final_wait_time(query)
+                }
+        count_ticket += 1
+        # print(client)
+        # print(tickets_dict)
+        return render(requests, "service.html", context={"data": client})
 
 
 class Processing_Page (View):
 
-    def get(self , requests , *args , **kwargs) :
+    def get(self, requests, *args, **kwargs):
 
-        clients_queue = tickets_dict
+        global count_ticket, first_clients, tickets_dict
 
-        
+        new_dict = {
+            'oil': 0,
+            'tire': 0,
+            'diag': 0
+        }
 
-        return render ( requests , "process.html" , context= {'line' : clients_queue})
+        for x in first_clients:
+            if "oil" in x['ticket name']:
+                new_dict['oil'] += 1
+            elif "tire" in x['ticket name']:
+                new_dict['tire'] += 1
+            elif "diag" in x['ticket name']:
+                new_dict['diag'] += 1
+
+        print(first_clients)
+        print(new_dict)
+
+        new_dict['oil'] += len(tickets_dict['oil'])
+        new_dict['tire'] += len(tickets_dict['tire'])
+        new_dict['diag'] += len(tickets_dict['diag'])
+
+        print(new_dict)
+
+        return render(requests, "process.html", context={'line': new_dict})
+
+    def post(self, requests, *args, **kwargs):
+
+        global count_ticket, first_clients, tickets_dict, current_client
+
+        if len(tickets_dict['oil']) != 0:
+            current_client = tickets_dict['oil'].popleft()
+
+        elif len(tickets_dict['oil']) == 0 and len(tickets_dict['tire']) != 0:
+            current_client = tickets_dict['tire'].popleft()
+
+        elif len(tickets_dict['oil']) == 0 and len(tickets_dict['tire']) == 0 and len(tickets_dict['diag']) != 0:
+            current_client = tickets_dict['diag'].popleft()
+
+        elif len(tickets_dict['oil']) == 0 and len(tickets_dict['tire']) == 0 and len(tickets_dict['diag']) == 0:
+            current_client = None
+
+        return redirect("/next")
+
 
 class Next_Client (View):
 
-    
-    def post(self , requests , *args, **kwargs):
+    def get(self, requests, *args, **kwargs):
 
-        
-        global client_list 
-        
-        del client_list[0]
-        
-        print(client_list)
+        global current_client
 
-        return render(requests , 'next.html' , context= { 'clients' : client_list[0]})
+        if current_client == None:
+            client = False
+        else:
+            client = current_client
 
+        return render(requests, 'next.html', context={'clients': client})
